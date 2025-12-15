@@ -1,0 +1,47 @@
+/* Basic global reset and lightweight utilities (keeps styles compatible with App.css variables) */
+:root {
+  --space-xs: 6px;
+  --space-sm: 12px;
+  --space-md: 16px;
+  --space-lg: 24px;
+  --space-xl: 32px;
+}
+
+html, body, #root {
+  height: 100%;
+}
+
+/* Keep index.css minimal — App.css is the primary theme source */
+body {
+  margin: 0;
+  min-width: 320px;
+  background-color: var(--bg-body, #f8fafc);
+  color: var(--text-main, #0f172a);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Links and buttons: lightweight defaults only */
+a {
+  color: var(--primary, #4f46e5);
+  text-decoration: none;
+}
+
+button {
+  border-radius: 8px;
+  border: none;
+  padding: 0.6em 1rem;
+  font-size: 1rem;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+/* Respect users who prefer reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}

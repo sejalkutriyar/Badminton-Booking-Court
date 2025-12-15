@@ -1,0 +1,345 @@
+/* Booking Page Title */
+.booking-page h2 {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: var(--text-main);
+    margin: 0 0 var(--space-xl) 0;
+}
+
+/* Layout: Stack primarily, side-by-side on desktop */
+.booking-grid {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-xl);
+}
+
+@media (min-width: 1024px) {
+    .booking-grid {
+        display: grid;
+        grid-template-columns: 2fr 1fr;
+        /* 2/3 Area for form, 1/3 for summary */
+        gap: var(--space-xl);
+        align-items: start;
+    }
+}
+
+/* Medium screens: slightly narrower left column so summary fits better */
+@media (min-width: 768px) and (max-width: 1023px) {
+    .booking-grid {
+        display: grid;
+        grid-template-columns: 1.4fr 1fr;
+        gap: var(--space-lg);
+        align-items: start;
+    }
+}
+
+/* Section Styling */
+.form-section {
+    background: var(--bg-surface);
+    padding: var(--space-xl);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-sm);
+    border: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-xl);
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+    color: var(--text-main);
+    font-size: 0.95rem;
+}
+
+.time-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+    /* Increased gap */
+}
+
+@media (max-width: 480px) {
+    .time-row {
+        grid-template-columns: 1fr;
+    }
+    .equipment-row {
+        flex-direction: column;
+        gap: 0.5rem;
+        align-items: stretch;
+    }
+    .equipment-row input { width: 100%; }
+}
+
+/* Selection Cards Grid */
+.cards-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    /* Wider cards */
+    gap: 1.5rem;
+}
+
+/* Make selection cards fill width on narrow screens for easier tapping */
+@media (max-width: 480px) {
+    .cards-grid {
+        grid-template-columns: 1fr;
+        gap: var(--space-md);
+    }
+    .selection-card {
+        padding: 1rem;
+        min-height: 100px;
+    }
+}
+
+.selection-card {
+    border: 2px solid var(--border);
+    border-radius: 12px;
+    padding: 1.5rem 1rem;
+    text-align: center;
+    cursor: pointer;
+    background: var(--bg-surface);
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    user-select: none;
+    min-height: 120px;
+    /* Taller cards */
+}
+
+.selection-card:hover {
+    transform: translateY(-4px);
+    border-color: var(--primary);
+    box-shadow: var(--shadow-md);
+}
+
+.selection-card:focus-visible,
+.card:focus-visible {
+    outline: 3px solid rgba(79,70,229,0.12);
+    outline-offset: 3px;
+}
+
+.selection-card.selected {
+    border-color: var(--primary);
+    background-color: #eef2ff;
+    color: var(--primary-dark);
+}
+
+.card-title {
+    font-weight: 700;
+    margin-bottom: 0.25rem;
+    font-size: 1.1rem;
+}
+
+.card-subtitle {
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-muted);
+}
+
+.selection-card.selected .card-subtitle {
+    color: var(--primary);
+}
+
+/* Equipment List */
+.equipment-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.9rem 1rem;
+    /* Tightened padding for a neater row */
+    background: #f8fafc;
+    border-radius: 12px;
+    margin-bottom: 0.9rem;
+    border: 1px solid var(--border);
+    transition: background 0.15s, transform 0.08s;
+}
+
+.equipment-row:hover {
+    background: #eef2ff;
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-md);
+    border-color: rgba(79,70,229,0.12);
+}
+
+.equipment-row span {
+    font-weight: 700;
+    font-size: 1.05rem;
+    color: var(--text-main);
+    flex: 1 1 auto;
+    /* Keep label left-aligned and allow it to wrap */
+}
+
+/* Numeric input: small, prominent control on the right */
+.equipment-row input[type="number"] {
+    flex: 0 0 84px;
+    width: 84px;
+    min-width: 64px;
+    height: 44px;
+    text-align: center;
+    padding: 0.4rem 0.5rem;
+    font-weight: 800;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--bg-surface);
+    box-shadow: var(--shadow-sm);
+    -moz-appearance: textfield;
+}
+
+.equipment-row input[type="number"]:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.08);
+}
+
+/* Remove default number input arrows for a cleaner look */
+.equipment-row input[type="number"]::-webkit-outer-spin-button,
+.equipment-row input[type="number"]::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+.equipment-row input[type="number"] { -moz-appearance: textfield; }
+
+/* On very small screens stack label above the control */
+@media (max-width: 480px) {
+    .equipment-row {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.5rem;
+        padding: 0.75rem;
+    }
+    .equipment-row span { margin-bottom: 0.25rem; }
+    .equipment-row input[type="number"] { width: 100%; flex: none; }
+}
+
+/* Sticky Summary Panel */
+.summary-section {
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    padding: 2rem;
+    /* Larger padding */
+    border-radius: 16px;
+    position: sticky;
+    top: 2rem;
+    box-shadow: var(--shadow-lg);
+}
+
+/* On smaller screens, keep the summary below the form and remove stickiness */
+@media (max-width: 767px) {
+    .summary-section {
+        position: static;
+        top: auto;
+        box-shadow: var(--shadow-sm);
+        margin-top: var(--space-lg);
+        padding: var(--space-lg);
+    }
+}
+
+.summary-section h3 {
+    margin-top: 0;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 1rem;
+    margin-bottom: 1.5rem;
+    font-size: 1.4rem;
+}
+
+.price-row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 0.75rem;
+    color: var(--text-muted);
+    font-size: 1rem;
+}
+
+.total-row {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 1.5rem;
+    padding-top: 1rem;
+    border-top: 2px dashed var(--border);
+    font-weight: 800;
+    font-size: 1.4rem;
+    color: var(--text-main);
+}
+
+/* Action Button */
+.book-btn {
+    width: 100%;
+    margin-top: 2rem;
+    padding: 1.25rem;
+    background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+    color: white;
+    font-weight: 700;
+    border-radius: 8px;
+    font-size: 1.1rem;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+/* Slightly smaller button on narrow screens */
+@media (max-width: 480px) {
+    .book-btn { padding: 0.9rem; font-size: 1rem; }
+}
+
+.book-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 20px -5px rgba(79, 70, 229, 0.4);
+}
+
+.book-btn:disabled {
+    background: #cbd5e1;
+    transform: none;
+    box-shadow: none;
+    cursor: not-allowed;
+}
+
+.placeholder-text {
+    text-align: center;
+    color: var(--text-muted);
+    font-style: italic;
+    padding: 2rem 0;
+}
+
+/* Banners */
+.error-banner,
+.success-banner,
+.warning-banner {
+    padding: 1rem;
+    border-radius: 8px;
+    margin-bottom: 1.5rem;
+    text-align: center;
+    font-weight: 600;
+}
+
+.error-banner {
+    background-color: #fee2e2;
+    color: #ef4444;
+    border: 1px solid #fecaca;
+}
+
+.success-banner {
+    background-color: #dcfce7;
+    color: #16a34a;
+    border: 1px solid #bbf7d0;
+}
+
+.warning-banner {
+    background-color: #fef9c3;
+    color: #854d0e;
+    border: 1px solid #fde047;
+    animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
