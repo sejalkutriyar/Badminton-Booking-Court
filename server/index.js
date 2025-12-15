@@ -9,6 +9,10 @@ const PORT = process.env.PORT || 5000;
 app.use(cors());
 app.use(express.json());
 
+// Connect to database
+connectDB();
+
+
 // Routes
 const bookingRoutes = require('./routes/bookings');
 const courtRoutes = require('./routes/courts');
@@ -29,11 +33,6 @@ app.get('/', (req, res) => {
 });
 
 // Connect Object & Start Server
-const startServer = async () => {
-    await connectDB();
-    app.listen(PORT, () => {
-        console.log(`Server running on port ${PORT}`);
-    });
-};
-
-startServer();
+app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
+});
