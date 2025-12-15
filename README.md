@@ -17,6 +17,12 @@ A clean, production-like MVP for booking badminton courts, built with Node.js, E
 - **Frontend**: React.js, Vite
 - **Styling**: Vanilla CSS
 
+## Assumptions Made
+1.  **Single Timezone**: The system assumes all bookings are made in the local server time.
+2.  **Fixed Slots**: While the DB supports minute-level precision, the UI encourages hourly slots for simplicity.
+3.  **Payment**: We assume payment is "Pay on Arrival" mock, so no real payment gateway integration was required for this MVP.
+4.  **Admin Access**: The `/admin` routes technically exist for everyone in this MVP (no authentication middleware was strictly mandated), but in production, this would be protected.
+
 ## Setup Instructions
 
 ### Prerequisites
