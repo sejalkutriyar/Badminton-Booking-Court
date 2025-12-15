@@ -1,7 +1,26 @@
 .admin-container {
     display: flex;
     min-height: calc(100vh - 60px);
-    /* Adjust based on navbar height */
+    position: relative;
+    /* Ensure relative positioning for absolute children */
+}
+
+/* Sidebar Toggle Button (Mobile Only) */
+.sidebar-toggle {
+    display: none;
+    position: fixed;
+    top: 80px;
+    /* Below navbar */
+    left: 10px;
+    z-index: 1001;
+    background: #2c3e50;
+    color: white;
+    border: none;
+    padding: 10px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 1.5rem;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
 }
 
 .admin-sidebar {
@@ -11,12 +30,29 @@
     padding: 20px;
     display: flex;
     flex-direction: column;
+    /* transition: transform 0.3s ease-in-out; */
+}
+
+.sidebar-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.close-sidebar {
+    display: none;
+    background: none;
+    border: none;
+    color: white;
+    font-size: 2rem;
+    cursor: pointer;
 }
 
 .admin-sidebar h3 {
     margin-bottom: 20px;
     border-bottom: 1px solid #34495e;
     padding-bottom: 10px;
+    width: 100%;
 }
 
 .admin-sidebar nav {
@@ -43,8 +79,23 @@
     padding: 30px;
     background-color: #f8f9fa;
     overflow-y: auto;
+    width: 100%;
+    /* Ensure content takes full width */
 }
 
+.sidebar-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 999;
+}
+
+
+/* Data Table Styles */
 .admin-table {
     width: 100%;
     border-collapse: collapse;
@@ -107,4 +158,44 @@
     border: 1px solid #ddd;
     border-radius: 4px;
     flex: 1;
+}
+
+/* Mobile Responsiveness */
+@media (max-width: 768px) {
+    .sidebar-toggle {
+        display: block;
+    }
+
+    .admin-sidebar {
+        position: fixed;
+        top: 0;
+        left: -280px;
+        height: 100vh;
+        z-index: 1000;
+        transition: left 0.3s ease-in-out;
+        box-shadow: 2px 0 5px rgba(0, 0, 0, 0.2);
+    }
+
+    .admin-sidebar.active {
+        left: 0;
+    }
+
+    .sidebar-overlay.active {
+        display: block;
+    }
+
+    .close-sidebar {
+        display: block;
+    }
+
+    .admin-content {
+        padding: 50px 15px 15px;
+        /* Add top padding for toggle button */
+    }
+
+    /* Form responsiveness */
+    .form-row {
+        flex-direction: column;
+        gap: 10px;
+    }
 }
