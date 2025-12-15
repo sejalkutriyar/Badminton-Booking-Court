@@ -145,6 +145,7 @@ const BookingPage = () => {
             setSelectedCoach(null);
             setStartTime('');
             setEndTime('');
+            setSelectedDate(''); // Clear date as well
 
         } catch (err) {
             const errMsg = err.response?.data?.error || 'Booking Failed';
