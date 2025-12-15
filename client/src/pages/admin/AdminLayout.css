@@ -9,9 +9,10 @@
 .sidebar-toggle {
     display: none;
     position: fixed;
-    top: 80px;
-    /* Below navbar */
-    left: 10px;
+    top: 15px;
+    /* Align with navbar */
+    right: 15px;
+    left: auto;
     z-index: 1001;
     background: #2c3e50;
     color: white;
