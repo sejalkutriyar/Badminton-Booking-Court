@@ -27,3 +27,31 @@ The `PricingService` is decoupled from the booking logic. It accepts a "request 
 - **Authentication**: Real user login.
 - **Payment Integration**: Stripe/Razorpay.
 - **Admin UI**: Interface to manage Courts and Pricing Rules.
+
+## Project Assignments Status Checklist
+
+According to the provided assignment requirements, the following is the status of features in the current codebase:
+
+### Core Features
+- [x] **Multi-Resource Booking**
+    - Users can book court + equipment + coach in a single flow.
+    - Atomic booking logic (all-or-nothing) is handled via transactions.
+- [x] **Dynamic Pricing**
+    - Price calculated based on configurable rules (Peak hours, Weekends, Indoor/Outdoor).
+    - Separation of booking logic and pricing logic (`PricingService`).
+- [ ] **Admin Configuration** (Major Missing Component)
+    - [ ] Admin Panel UI (No admin pages in frontend).
+    - [ ] Manage Courts (Add/Edit/Disable).
+    - [ ] Manage Equipment Inventory (Add/Update stock).
+    - [ ] Manage Coach Profiles & Availability.
+    - [ ] Manage Pricing Rules (Create/Update/Enable/Disable).
+    - *Current State*: Backend only has read-only routes for these resources; no Create/Update/Delete endpoints exist.
+- [x] **Frontend User Flow**
+    - [x] View available slots.
+    - [x] Select court, add equipment, add coach.
+    - [x] See live price breakdown.
+    - [x] Confirm booking and view history.
+
+### Bonus Features
+- [x] **Concurrent Booking Handling**: Implemented using MongoDB Transactions to prevent double-booking.
+- [ ] **Waitlist System**: No implementation found for waitlisting users on full slots.
