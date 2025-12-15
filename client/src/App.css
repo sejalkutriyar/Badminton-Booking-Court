@@ -1,39 +1,43 @@
 /* Global Variables & Reset */
 :root {
-  /* Ultra Modern Palette */
-  --primary: #4f46e5;
+  /* Ultra Modern Premium Palette */
+  --primary: #6366f1;
+  /* Indigo 500 - More vibrant */
+  --primary-dark: #4f46e5;
   /* Indigo 600 */
-  --primary-dark: #4338ca;
-  /* Indigo 700 */
   --secondary: #ec4899;
   /* Pink 500 */
   --accent: #8b5cf6;
   /* Violet 500 */
 
-  --bg-body: #f8fafc;
-  /* Slate 50 */
+  --bg-body: #f3f4f6;
+  /* Cool Gray 100 - Not plain white */
   --bg-surface: #ffffff;
 
-  --text-main: #0f172a;
-  /* Slate 900 */
-  --text-muted: #64748b;
-  /* Slate 500 */
+  --text-main: #1f2937;
+  /* Gray 800 */
+  --text-muted: #6b7280;
+  /* Gray 500 */
 
-  --border: #e2e8f0;
-  /* Slate 200 */
+  --border: #e5e7eb;
+  /* Gray 200 */
 
-  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.1);
+  /* Softer, more diffused shadows */
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
   --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
   --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
 
-  --radius: 12px;
-  --max-width: 1600px;
-  /* Spacing scale */
-  --space-xs: 6px;
+  --radius: 16px;
+  /* Rounder corners */
+  --max-width: 1400px;
+  /* Slightly narrower for focus */
+
+  --space-xs: 8px;
   --space-sm: 12px;
-  --space-md: 16px;
-  --space-lg: 24px;
-  --space-xl: 32px;
+  --space-md: 20px;
+  --space-lg: 32px;
+  --space-xl: 48px;
 }
 
 * {
@@ -105,6 +109,7 @@ body {
     gap: var(--space-sm);
     align-items: stretch;
   }
+
   .nav-links {
     justify-content: center;
     flex-wrap: wrap;
@@ -189,8 +194,23 @@ button:focus-visible {
 
 /* Make layout a little more compact on small screens */
 @media (max-width: 640px) {
-  .app-container { padding: 12px; }
-  .page-container { padding: 1rem; }
-  .navbar { padding: 0.6rem; }
-  input[type="date"], input[type="time"], input[type="number"], input[type="text"] { padding: 0.9rem; font-size: 1rem; }
+  .app-container {
+    padding: 12px;
+  }
+
+  .page-container {
+    padding: 1rem;
+  }
+
+  .navbar {
+    padding: 0.6rem;
+  }
+
+  input[type="date"],
+  input[type="time"],
+  input[type="number"],
+  input[type="text"] {
+    padding: 0.9rem;
+    font-size: 1rem;
+  }
 }

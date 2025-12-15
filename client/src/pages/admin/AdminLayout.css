@@ -190,8 +190,13 @@
     }
 
     .admin-content {
-        padding: 50px 15px 15px;
-        /* Add top padding for toggle button */
+        padding: 60px 15px 15px;
+        /* Adjusted top padding: header is fixed, but toggle is absolute. 15px might be too tight if toggle is there. 
+           Actually, the toggle is fixed at top:15px. Let's give enough space so content doesn't overlap it if scrolled up? 
+           Wait, user said "niche se jo start ho rhe hai" (starting from too low).
+           If toggle is at top right, we just need normal padding. 
+           Let's try 20px top padding. */
+        padding-top: 20px;
     }
 
     /* Form responsiveness */
