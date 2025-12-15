@@ -47,10 +47,12 @@
 body {
   margin: 0;
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  background-color: var(--bg-body);
+  /* Radiant Gradient Background */
+  background: linear-gradient(135deg, #EEF2FF 0%, #E0E7FF 50%, #C7D2FE 100%);
   color: var(--text-main);
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
+  min-height: 100vh;
 }
 
 /* Layout Containers */
@@ -58,7 +60,6 @@ body {
   width: 100%;
   max-width: var(--max-width);
   margin: 0 auto;
-  /* Center the container */
   padding: 24px;
   min-height: 100vh;
   display: flex;
@@ -70,12 +71,18 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 0.75rem 1rem;
-  background: var(--bg-surface);
+  padding: 0.75rem 1.5rem;
+  background: rgba(255, 255, 255, 0.95);
+  /* High opacity white */
+  backdrop-filter: blur(10px);
+  /* Frosted glass effect */
   border-radius: var(--radius);
-  box-shadow: var(--shadow-sm);
+  box-shadow: var(--shadow-md);
   margin-bottom: 2rem;
-  border: 1px solid var(--border);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  position: sticky;
+  top: 1rem;
+  z-index: 100;
 }
 
 .logo {
@@ -93,12 +100,14 @@ body {
   color: var(--text-muted);
   font-weight: 600;
   margin-left: 1.25rem;
-  transition: color 0.2s;
+  transition: all 0.2s;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
 }
 
 .nav-links {
   display: flex;
-  gap: var(--space-md);
+  gap: var(--space-xs);
   align-items: center;
 }
 
@@ -108,28 +117,32 @@ body {
     flex-direction: column;
     gap: var(--space-sm);
     align-items: stretch;
+    position: relative;
+    /* Not sticky on mobile if space is tight */
+    top: 0;
   }
 
   .nav-links {
     justify-content: center;
     flex-wrap: wrap;
-    gap: var(--space-sm);
+    gap: var(--space-xs);
   }
 }
 
-.nav-links a:hover {
+.nav-links a:hover,
+.nav-links a.active {
   color: var(--primary);
+  background: #EEF2FF;
 }
 
 /* Main Page Content Wrapper */
 .page-container {
-  background: var(--bg-surface);
-  padding: 1.5rem;
-  border-radius: var(--radius);
-  box-shadow: var(--shadow-md);
-  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.9);
+  padding: 2rem;
+  border-radius: 24px;
+  box-shadow: var(--shadow-lg);
+  border: 1px solid rgba(255, 255, 255, 0.6);
   flex-grow: 1;
-  /* Ensure full height feel */
 }
 
 /* Global Form Elements */

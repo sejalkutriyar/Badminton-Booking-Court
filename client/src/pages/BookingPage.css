@@ -1,9 +1,14 @@
 /* Booking Page Title */
 .booking-page h2 {
-    font-size: 1.75rem;
-    font-weight: 700;
-    color: var(--text-main);
+    font-size: 2rem;
+    font-weight: 800;
+    background: linear-gradient(135deg, var(--primary), var(--secondary));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
     margin: 0 0 var(--space-xl) 0;
+    letter-spacing: -0.02em;
+    text-shadow: 0 2px 10px rgba(99, 102, 241, 0.1);
 }
 
 /* Layout: Stack primarily, side-by-side on desktop */
@@ -23,26 +28,24 @@
     }
 }
 
-/* Medium screens: slightly narrower left column so summary fits better */
-@media (min-width: 768px) and (max-width: 1023px) {
-    .booking-grid {
-        display: grid;
-        grid-template-columns: 1.4fr 1fr;
-        gap: var(--space-lg);
-        align-items: start;
-    }
-}
-
 /* Section Styling */
 .form-section {
-    background: var(--bg-surface);
+    background: rgba(255, 255, 255, 0.5);
+    /* Semi-transparent */
+    backdrop-filter: blur(5px);
     padding: var(--space-xl);
     border-radius: var(--radius);
     box-shadow: var(--shadow-sm);
-    border: 1px solid var(--border);
+    border: 1px solid rgba(255, 255, 255, 0.8);
     display: flex;
     flex-direction: column;
     gap: var(--space-xl);
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.form-section:hover {
+    box-shadow: var(--shadow-md);
+    border-color: rgba(255, 255, 255, 1);
 }
 
 .form-group label {
