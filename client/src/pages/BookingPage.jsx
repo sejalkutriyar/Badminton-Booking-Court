@@ -113,8 +113,11 @@ const BookingPage = () => {
         }
     };
 
+    const [isSubmitting, setIsSubmitting] = useState(false);
+
     const handleBooking = async () => {
         try {
+            setIsSubmitting(true);
             setError(null);
             setSuccess(null);
             setShowWaitlist(false);
@@ -132,7 +135,8 @@ const BookingPage = () => {
             });
 
             setSuccess('Booking Confirmed! You can check it in the History tab.');
-            window.scrollTo({ top: 0, behavior: 'smooth' });
+            // Instant scroll to top
+            window.scrollTo({ top: 0, behavior: 'auto' });
 
             // Reset selection
             setPriceDetails(null);
@@ -149,6 +153,10 @@ const BookingPage = () => {
             if (errMsg.includes('already booked')) {
                 setShowWaitlist(true);
             }
+            // Scroll to top to show error instantly
+            window.scrollTo({ top: 0, behavior: 'auto' });
+        } finally {
+            setIsSubmitting(false);
         }
     };
 
@@ -314,9 +322,9 @@ const BookingPage = () => {
                             <button
                                 className="book-btn"
                                 onClick={handleBooking}
-                                disabled={!isTimeValid}
+                                disabled={!isTimeValid || isSubmitting}
                             >
-                                Confirm Booking
+                                {isSubmitting ? 'Confirming...' : 'Confirm Booking'}
                             </button>
                         </div>
                     ) : (
