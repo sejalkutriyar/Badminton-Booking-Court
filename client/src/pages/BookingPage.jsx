@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { fetchCourts, fetchCoaches, fetchEquipment, calculatePrice, createBooking } from '../api';
+import { fetchCourts, fetchCoaches, fetchEquipment, calculatePrice, createBooking, joinWaitlist } from '../api';
 import './BookingPage.css';
 
 const BookingPage = () => {
@@ -19,6 +19,7 @@ const BookingPage = () => {
     const [priceDetails, setPriceDetails] = useState(null);
     const [error, setError] = useState(null);
     const [success, setSuccess] = useState(null);
+    const [showWaitlist, setShowWaitlist] = useState(false); // New state
 
     useEffect(() => {
         // Initial Data Fetch
@@ -81,6 +82,7 @@ const BookingPage = () => {
                     });
                     setPriceDetails(res.data);
                     setError(null);
+                    setShowWaitlist(false);
                 } catch (err) {
                     console.error(err);
                     setPriceDetails(null);
@@ -94,15 +96,15 @@ const BookingPage = () => {
         return () => clearTimeout(timer);
     }, [selectedDate, startTime, endTime, selectedCourt, selectedCoach, selectedEquipment, isTimeValid]);
 
-    const handleEquipmentChange = (id, value) => {
-        if (value === '') {
+    const handleEquipmentChange = (id, newValue) => {
+        if (newValue === '' || newValue === undefined) {
             setSelectedEquipment(prev => ({
                 ...prev,
                 [id]: ''
             }));
             return;
         }
-        const qty = parseInt(value);
+        const qty = parseInt(newValue);
         if (!isNaN(qty) && qty >= 0) {
             setSelectedEquipment(prev => ({
                 ...prev,
@@ -115,6 +117,7 @@ const BookingPage = () => {
         try {
             setError(null);
             setSuccess(null);
+            setShowWaitlist(false);
             const eqArray = Object.entries(selectedEquipment)
                 .filter(([_, qty]) => qty > 0)
                 .map(([id, qty]) => ({ id, quantity: qty }));
@@ -140,7 +143,37 @@ const BookingPage = () => {
             setEndTime('');
 
         } catch (err) {
-            setError(err.response?.data?.error || 'Booking Failed');
+            const errMsg = err.response?.data?.error || 'Booking Failed';
+            setError(errMsg);
+            // Check if error is related to availability
+            if (errMsg.includes('already booked')) {
+                setShowWaitlist(true);
+            }
+        }
+    };
+
+    const handleJoinWaitlist = async () => {
+        try {
+            const userName = prompt("Enter your Name for Waitlist:");
+            if (!userName) return;
+            const userEmail = prompt("Enter your Email for Notification:");
+            if (!userEmail) return;
+
+            await joinWaitlist({
+                date: selectedDate,
+                startTime,
+                endTime,
+                courtId: selectedCourt._id,
+                userEmail,
+                userName
+            });
+
+            setSuccess('Joined Waitlist! We will notify you if the slot opens up.');
+            setError(null);
+            setShowWaitlist(false);
+        } catch (err) {
+            console.error(err);
+            setError(err.response?.data?.error || err.message || 'Failed to join waitlist');
         }
     };
 
@@ -148,7 +181,19 @@ const BookingPage = () => {
         <div className="page-container booking-page">
             <h2>Book a Court</h2>
 
-            {error && <div className="error-banner">{error}</div>}
+            {error && (
+                <div className="error-banner">
+                    {error}
+                    {showWaitlist && (
+                        <div style={{ marginTop: '10px' }}>
+                            <p style={{ fontSize: '0.9rem', marginBottom: '5px' }}>This slot is full. Want to be notified if it opens?</p>
+                            <button className="book-btn" style={{ backgroundColor: '#e67e22' }} onClick={handleJoinWaitlist}>
+                                Join Waitlist
+                            </button>
+                        </div>
+                    )}
+                </div>
+            )}
             {success && (
                 <div className="success-banner">
                     {success} <br />
@@ -223,13 +268,30 @@ const BookingPage = () => {
                         {equipmentList.map(item => (
                             <div key={item._id} className="equipment-row">
                                 <span>{item.name}</span>
-                                <input
-                                    type="number"
-                                    min="0"
-                                    max={item.total_quantity}
-                                    value={selectedEquipment[item._id] !== undefined ? selectedEquipment[item._id] : 0}
-                                    onChange={(e) => handleEquipmentChange(item._id, e.target.value)}
-                                />
+                                <div className="stepper-control">
+                                    <button
+                                        className="stepper-btn"
+                                        onClick={() => handleEquipmentChange(item._id, (selectedEquipment[item._id] || 0) - 1)}
+                                        disabled={(selectedEquipment[item._id] || 0) <= 0}
+                                    >
+                                        −
+                                    </button>
+                                    <input
+                                        type="number"
+                                        className="stepper-input"
+                                        min="0"
+                                        max={item.total_quantity}
+                                        value={selectedEquipment[item._id] !== undefined ? selectedEquipment[item._id] : 0}
+                                        onChange={(e) => handleEquipmentChange(item._id, e.target.value)}
+                                    />
+                                    <button
+                                        className="stepper-btn"
+                                        onClick={() => handleEquipmentChange(item._id, (selectedEquipment[item._id] || 0) + 1)}
+                                        disabled={(selectedEquipment[item._id] || 0) >= item.total_quantity}
+                                    >
+                                        +
+                                    </button>
+                                </div>
                             </div>
                         ))}
                     </div>

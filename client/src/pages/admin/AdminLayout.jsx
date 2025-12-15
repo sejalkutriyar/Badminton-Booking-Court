@@ -1,5 +1,5 @@
 import React from 'react';
-import { Link, Outlet } from 'react-router-dom';
+import { Link, NavLink, Outlet } from 'react-router-dom';
 import './AdminLayout.css';
 
 const AdminLayout = () => {
@@ -11,8 +11,9 @@ const AdminLayout = () => {
                     <Link to="/admin">Dashboard</Link>
                     <Link to="/admin/courts">Manage Courts</Link>
                     <Link to="/admin/coaches">Manage Coaches</Link>
-                    <Link to="/admin/equipment">Manage Equipment</Link>
-                    <Link to="/admin/pricing">Manage Pricing</Link>
+                    <NavLink to="/admin/equipment" className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}>Equipment</NavLink>
+                    <NavLink to="/admin/pricing" className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}>Pricing</NavLink>
+                    <NavLink to="/admin/waitlist" className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}>Waitlist</NavLink>
                 </nav>
             </aside>
             <main className="admin-content">

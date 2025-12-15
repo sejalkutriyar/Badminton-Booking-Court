@@ -22,6 +22,7 @@ app.use('/api/coaches', coachRoutes);
 app.use('/api/equipment', equipmentRoutes);
 app.use('/api/pricing', pricingRoutes);
 app.use('/api/admin', require('./routes/admin'));
+app.use('/api/waitlist', require('./routes/waitlist'));
 
 app.get('/', (req, res) => {
     res.send('Badminton Booking API is running (MongoDB)');

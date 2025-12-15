@@ -6,7 +6,10 @@ A clean, production-like MVP for booking badminton courts, built with Node.js, E
 - **Atomic Bookings**: Ensures no double bookings for courts or coaches.
 - **Dynamic Pricing**: Calculates price based on time, court type, coach, and equipment.
 - **Inventory Management**: Tracks equipment quantity availability.
-- **Booking History**: View all past and upcoming bookings.
+- **Booking History**: View all past and upcoming bookings, with cancellation support.
+- **Admin Panel**: Full CRUD operations for Courts, Coaches, Equipment, and Pricing Rules.
+- **Waitlist System**: Users can join a waitlist for fully booked slots; automatic notification logs on cancellation.
+- **Enhanced UI**: Stepper controls for equipment, responsive design, and admin dashboard.
 
 ## Tech Stack
 - **Backend**: Node.js, Express.js
@@ -61,5 +64,10 @@ A clean, production-like MVP for booking badminton courts, built with Node.js, E
 - `GET /api/equipment`: list of equipment
 - `POST /api/bookings`: create a booking
 - `GET /api/bookings`: get history
+- `DELETE /api/bookings/:id`: cancel a booking
+- `DELETE /api/bookings`: clear all history
 - `POST /api/pricing/calculate`: get price breakdown
+- `POST /api/waitlist/join`: join waitlist
+- `GET /api/waitlist`: view waitlist (Admin)
+- `/api/admin/*`: Admin CRUD endpoints for courts, coaches, equipment, pricing
 

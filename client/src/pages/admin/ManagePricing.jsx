@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { fetchAdminPricing, createPricing, updatePricing, deletePricing } from '../../api';
+import { fetchAdminPricing, createPricingRule, updatePricing, deletePricingRule } from '../../api';
 
 const ManagePricing = () => {
     const [rules, setRules] = useState([]);
@@ -35,7 +35,7 @@ const ManagePricing = () => {
                 await updatePricing(editingId, formData);
                 setSuccess('Rule updated successfully');
             } else {
-                await createPricing(formData);
+                await createPricingRule(formData);
                 setSuccess('Rule created successfully');
             }
             setFormData({ type: 'PEAK_HOUR', value: 0, is_active: true });
@@ -55,7 +55,7 @@ const ManagePricing = () => {
     const handleDelete = async (id) => {
         if (!window.confirm('Are you sure?')) return;
         try {
-            await deletePricing(id);
+            await deletePricingRule(id);
             setSuccess('Rule deleted');
             loadRules();
         } catch (err) {

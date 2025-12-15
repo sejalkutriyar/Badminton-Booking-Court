@@ -127,10 +127,44 @@ class BookingService {
     }
 
     async clearHistory() {
-        // Deletes all bookings (for demo/testing purposes). In a real app,
-        // this should be scoped to the current user or require proper auth.
         const result = await Booking.deleteMany({});
         return result;
+    }
+
+    async deleteBooking(id) {
+        const session = await mongoose.startSession();
+        session.startTransaction();
+        try {
+            const booking = await Booking.findById(id).session(session);
+            if (!booking) throw new Error('Booking not found');
+
+            const { date, start_time, end_time, court } = booking;
+            await Booking.findByIdAndDelete(id).session(session);
+
+            // Check Waitlist
+            const Waitlist = require('../models/Waitlist');
+            const nextUser = await Waitlist.findOne({
+                date,
+                start_time,
+                end_time,
+                court
+            }).sort({ created_at: 1 }).session(session);
+
+            if (nextUser) {
+                console.log(`[WAITLIST NOTIFICATION] Slot opened for ${date} ${start_time}! Notifying ${nextUser.user_email} (${nextUser.user_name})`);
+                // In a real app, send email here.
+                // Optionally remove from waitlist or keep until they book?
+                // Let's keep them notified but not remove until they book or expire.
+            }
+
+            await session.commitTransaction();
+            session.endSession();
+            return { message: 'Booking cancelled' };
+        } catch (error) {
+            await session.abortTransaction();
+            session.endSession();
+            throw error;
+        }
     }
 }
 

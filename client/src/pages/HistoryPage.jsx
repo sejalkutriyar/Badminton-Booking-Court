@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { fetchHistory } from '../api';
+import { fetchHistory, cancelBooking, clearHistory } from '../api';
 import './HistoryPage.css';
 import { format } from 'date-fns';
-import { clearHistory } from '../api';
 
 const HistoryPage = () => {
     const [bookings, setBookings] = useState([]);
@@ -10,16 +9,17 @@ const HistoryPage = () => {
     const [banner, setBanner] = useState(null); // { type: 'success'|'error', message: '' }
 
     useEffect(() => {
-        const getHistory = async () => {
-            try {
-                const res = await fetchHistory();
-                setBookings(res.data);
-            } catch (err) {
-                console.error('Failed to load history', err);
-            }
-        };
-        getHistory();
+        loadHistory();
     }, []);
+
+    const loadHistory = async () => {
+        try {
+            const res = await fetchHistory();
+            setBookings(res.data);
+        } catch (err) {
+            console.error('Failed to load history', err);
+        }
+    };
 
     const handleClear = async () => {
         const ok = window.confirm('Are you sure you want to clear ALL booking history? This cannot be undone.');
@@ -39,7 +39,19 @@ const HistoryPage = () => {
             setBanner({ type: 'error', message: err?.response?.data?.error || err.message || 'Failed to clear history.' });
         } finally {
             setIsClearing(false);
-            // auto-hide banner after 3s
+            setTimeout(() => setBanner(null), 3000);
+        }
+    };
+
+    const handleCancel = async (id) => {
+        if (!window.confirm('Cancel this booking?')) return;
+        try {
+            await cancelBooking(id);
+            setBanner({ type: 'success', message: 'Booking cancelled.' });
+            loadHistory(); // Reload
+        } catch (err) {
+            setBanner({ type: 'error', message: err.response?.data?.error || 'Cancellation failed' });
+        } finally {
             setTimeout(() => setBanner(null), 3000);
         }
     };
@@ -110,6 +122,20 @@ const HistoryPage = () => {
 
                             <div className="booking-footer">
                                 <span className="total-price">₹{booking.total_price}</span>
+                                <button
+                                    style={{
+                                        marginLeft: '10px',
+                                        backgroundColor: '#e74c3c',
+                                        color: 'white',
+                                        border: 'none',
+                                        padding: '5px 10px',
+                                        borderRadius: '4px',
+                                        cursor: 'pointer'
+                                    }}
+                                    onClick={() => handleCancel(booking._id)}
+                                >
+                                    Cancel
+                                </button>
                             </div>
                         </div>
                     ))}

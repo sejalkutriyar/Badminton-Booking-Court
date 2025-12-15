@@ -7,6 +7,7 @@ import ManageCourts from './pages/admin/ManageCourts';
 import ManageCoaches from './pages/admin/ManageCoaches';
 import ManageEquipment from './pages/admin/ManageEquipment';
 import ManagePricing from './pages/admin/ManagePricing';
+import ManageWaitlist from './pages/admin/ManageWaitlist';
 
 import './App.css';
 
@@ -34,6 +35,7 @@ function App() {
               <Route path="coaches" element={<ManageCoaches />} />
               <Route path="equipment" element={<ManageEquipment />} />
               <Route path="pricing" element={<ManagePricing />} />
+              <Route path="waitlist" element={<ManageWaitlist />} />
             </Route>
           </Routes>
         </main>

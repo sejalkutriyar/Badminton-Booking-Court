@@ -22,11 +22,21 @@ router.get('/', async (req, res) => {
     }
 });
 
-// Clear history (dangerous: deletes all bookings) — use confirmation on client
+// Cancel Booking
+router.delete('/:id', async (req, res) => {
+    try {
+        const result = await bookingService.deleteBooking(req.params.id);
+        res.json(result);
+    } catch (error) {
+        res.status(400).json({ error: error.message });
+    }
+});
+
+// Clear All History
 router.delete('/', async (req, res) => {
     try {
         const result = await bookingService.clearHistory();
-        res.json({ deletedCount: result.deletedCount });
+        res.json(result);
     } catch (error) {
         res.status(500).json({ error: error.message });
     }

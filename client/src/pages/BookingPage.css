@@ -64,12 +64,12 @@
     .time-row {
         grid-template-columns: 1fr;
     }
+
     .equipment-row {
         flex-direction: column;
         gap: 0.5rem;
         align-items: stretch;
     }
-    .equipment-row input { width: 100%; }
 }
 
 /* Selection Cards Grid */
@@ -86,6 +86,7 @@
         grid-template-columns: 1fr;
         gap: var(--space-md);
     }
+
     .selection-card {
         padding: 1rem;
         min-height: 100px;
@@ -117,7 +118,7 @@
 
 .selection-card:focus-visible,
 .card:focus-visible {
-    outline: 3px solid rgba(79,70,229,0.12);
+    outline: 3px solid rgba(79, 70, 229, 0.12);
     outline-offset: 3px;
 }
 
@@ -149,8 +150,7 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 0.9rem 1rem;
-    /* Tightened padding for a neater row */
+    padding: 0.75rem 1rem;
     background: #f8fafc;
     border-radius: 12px;
     margin-bottom: 0.9rem;
@@ -160,59 +160,100 @@
 
 .equipment-row:hover {
     background: #eef2ff;
-    transform: translateY(-3px);
+    transform: translateY(-2px);
     box-shadow: var(--shadow-md);
-    border-color: rgba(79,70,229,0.12);
+    border-color: rgba(79, 70, 229, 0.12);
 }
 
 .equipment-row span {
     font-weight: 700;
     font-size: 1.05rem;
     color: var(--text-main);
-    flex: 1 1 auto;
-    /* Keep label left-aligned and allow it to wrap */
 }
 
-/* Numeric input: small, prominent control on the right */
-.equipment-row input[type="number"] {
-    flex: 0 0 84px;
-    width: 84px;
-    min-width: 64px;
-    height: 44px;
-    text-align: center;
-    padding: 0.4rem 0.5rem;
-    font-weight: 800;
-    border-radius: 8px;
+/* Stepper Control */
+.stepper-control {
+    display: flex;
+    align-items: center;
+    background: white;
     border: 1px solid var(--border);
-    background: var(--bg-surface);
+    border-radius: 8px;
+    overflow: hidden;
     box-shadow: var(--shadow-sm);
+}
+
+.stepper-btn {
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    background: white;
+    cursor: pointer;
+    font-size: 1.2rem;
+    color: var(--primary);
+    transition: background 0.2s;
+}
+
+.stepper-btn:hover:not(:disabled) {
+    background: #f1f5f9;
+}
+
+.stepper-btn:disabled {
+    color: var(--text-placeholder);
+    cursor: not-allowed;
+    background: #f8fafc;
+}
+
+.stepper-input {
+    width: 50px;
+    height: 36px;
+    text-align: center;
+    font-weight: 700;
+    font-size: 1rem;
+    color: var(--text-main);
+    border: none;
+    border-left: 1px solid var(--border);
+    border-right: 1px solid var(--border);
+    background: white;
+    appearance: textfield;
     -moz-appearance: textfield;
 }
 
-.equipment-row input[type="number"]:focus {
+.stepper-input:focus {
     outline: none;
-    border-color: var(--primary);
-    box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.08);
+    background: #f8fafc;
 }
 
-/* Remove default number input arrows for a cleaner look */
-.equipment-row input[type="number"]::-webkit-outer-spin-button,
-.equipment-row input[type="number"]::-webkit-inner-spin-button {
+.stepper-input::-webkit-outer-spin-button,
+.stepper-input::-webkit-inner-spin-button {
     -webkit-appearance: none;
     margin: 0;
 }
-.equipment-row input[type="number"] { -moz-appearance: textfield; }
 
-/* On very small screens stack label above the control */
 @media (max-width: 480px) {
     .equipment-row {
         flex-direction: column;
         align-items: stretch;
-        gap: 0.5rem;
-        padding: 0.75rem;
+        gap: 0.75rem;
+        padding: 1rem;
     }
-    .equipment-row span { margin-bottom: 0.25rem; }
-    .equipment-row input[type="number"] { width: 100%; flex: none; }
+
+    .stepper-control {
+        align-self: flex-end;
+        /* Align to right on mobile if stacked, or stretch */
+        width: 100%;
+        justify-content: space-between;
+    }
+
+    .stepper-btn {
+        flex: 1;
+    }
+
+    .stepper-value {
+        flex: 2;
+    }
 }
 
 /* Sticky Summary Panel */
@@ -280,7 +321,10 @@
 
 /* Slightly smaller button on narrow screens */
 @media (max-width: 480px) {
-    .book-btn { padding: 0.9rem; font-size: 1rem; }
+    .book-btn {
+        padding: 0.9rem;
+        font-size: 1rem;
+    }
 }
 
 .book-btn:hover {
