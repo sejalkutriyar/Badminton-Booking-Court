@@ -1,37 +1,41 @@
 /* Global Variables & Reset */
 :root {
-  /* Ultra Modern Premium Palette */
-  --primary: #6366f1;
-  /* Indigo 500 - More vibrant */
-  --primary-dark: #4f46e5;
-  /* Indigo 600 */
-  --secondary: #ec4899;
-  /* Pink 500 */
-  --accent: #8b5cf6;
-  /* Violet 500 */
+  /* User's Earth Palette */
+  --primary: #8D6E63;
+  /* Earthy Brown */
+  --primary-dark: #6D4C41;
+  /* Darker Brown for hover/active */
+  --secondary: #A1887F;
+  /* Light Brown */
+  --accent: #BCAAA4;
+  /* Beige Accent */
 
-  --bg-body: #f3f4f6;
-  /* Cool Gray 100 - Not plain white */
+  --bg-body: #EFEBE9;
+  /* Warm Neutral */
   --bg-surface: #ffffff;
 
-  --text-main: #1f2937;
-  /* Gray 800 */
-  --text-muted: #6b7280;
-  /* Gray 500 */
+  --text-main: #3E2723;
+  /* Dark Brown Text */
+  --text-muted: #5D4037;
+  /* Muted Brown Text */
 
-  --border: #e5e7eb;
-  /* Gray 200 */
+  --border: #D7CCC8;
+  /* Light Brown Border */
 
-  /* Softer, more diffused shadows */
-  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  /* Success/Warning/Error */
+  --success: #A5D6A7;
+  --warning: #FFE082;
+  --error: #EF9A9A;
+  --info: #90CAF9;
+
+  /* Shadows - Warmer tone */
+  --shadow-sm: 0 1px 2px 0 rgba(62, 39, 35, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(62, 39, 35, 0.1), 0 2px 4px -1px rgba(62, 39, 35, 0.06);
+  --shadow-lg: 0 10px 15px -3px rgba(62, 39, 35, 0.1), 0 4px 6px -2px rgba(62, 39, 35, 0.05);
+  --shadow-xl: 0 20px 25px -5px rgba(62, 39, 35, 0.1), 0 10px 10px -5px rgba(62, 39, 35, 0.04);
 
   --radius: 16px;
-  /* Rounder corners */
   --max-width: 1400px;
-  /* Slightly narrower for focus */
 
   --space-xs: 8px;
   --space-sm: 12px;
@@ -47,8 +51,8 @@
 body {
   margin: 0;
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  /* Radiant Gradient Background */
-  background: linear-gradient(135deg, #EEF2FF 0%, #E0E7FF 50%, #C7D2FE 100%);
+  /* Warm Earthy Gradient Background */
+  background: linear-gradient(135deg, #EFEBE9 0%, #D7CCC8 100%);
   color: var(--text-main);
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
@@ -132,7 +136,8 @@ body {
 .nav-links a:hover,
 .nav-links a.active {
   color: var(--primary);
-  background: #EEF2FF;
+  background: #EFEBE9;
+  /* Use neutral bg for hover */
 }
 
 /* Main Page Content Wrapper */
@@ -162,7 +167,8 @@ input[type="text"] {
   /* Larger touch targets */
   border: 1px solid var(--border);
   border-radius: 8px;
-  background: var(--bg-body);
+  background: var(--bg-surface);
+  /* White input backgrounds are cleaner */
   transition: all 0.2s;
   color: var(--text-main);
   font-size: 1.1rem;
@@ -172,7 +178,8 @@ input[type="text"] {
 input:focus {
   outline: none;
   border-color: var(--primary);
-  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+  box-shadow: 0 0 0 3px rgba(141, 110, 99, 0.2);
+  /* Brownish shadow */
   background: var(--bg-surface);
 }
 
@@ -201,7 +208,7 @@ button {
 }
 
 button:focus-visible {
-  outline: 3px solid rgba(79, 70, 229, 0.15);
+  outline: 3px solid rgba(141, 110, 99, 0.3);
   outline-offset: 2px;
 }
 
