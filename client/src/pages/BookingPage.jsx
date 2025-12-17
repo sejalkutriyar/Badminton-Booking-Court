@@ -30,7 +30,17 @@ const BookingPage = () => {
                     fetchCoaches(),
                     fetchEquipment()
                 ]);
-                setCourts(cRes.data);
+
+                // Sort courts numerically (1-2-3...) based on name
+                const sortedCourts = cRes.data.sort((a, b) => {
+                    const extractNum = (name) => {
+                        const match = name.match(/(\d+)/);
+                        return match ? parseInt(match[0], 10) : Infinity;
+                    };
+                    return extractNum(a.name) - extractNum(b.name);
+                });
+
+                setCourts(sortedCourts);
                 setCoaches(coRes.data);
                 setEquipmentList(eqRes.data);
             } catch (err) {

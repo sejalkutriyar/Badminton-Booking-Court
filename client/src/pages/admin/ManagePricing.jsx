@@ -6,7 +6,7 @@ const ManagePricing = () => {
     const [editingId, setEditingId] = useState(null);
     const [formData, setFormData] = useState({
         type: 'PEAK_HOUR',
-        value: 0,
+        value: '',
         is_active: true
     });
 
@@ -32,13 +32,13 @@ const ManagePricing = () => {
         setSuccess(null);
         try {
             if (editingId) {
-                await updatePricing(editingId, formData);
+                await updatePricing(editingId, { ...formData, value: parseFloat(formData.value) || 0 });
                 setSuccess('Rule updated successfully');
             } else {
-                await createPricingRule(formData);
+                await createPricingRule({ ...formData, value: parseFloat(formData.value) || 0 });
                 setSuccess('Rule created successfully');
             }
-            setFormData({ type: 'PEAK_HOUR', value: 0, is_active: true });
+            setFormData({ type: 'PEAK_HOUR', value: '', is_active: true });
             setEditingId(null);
             loadRules();
         } catch (err) {
@@ -65,7 +65,7 @@ const ManagePricing = () => {
 
     const handleCancel = () => {
         setEditingId(null);
-        setFormData({ type: 'PEAK_HOUR', value: 0, is_active: true });
+        setFormData({ type: 'PEAK_HOUR', value: '', is_active: true });
     };
 
     return (
@@ -93,7 +93,7 @@ const ManagePricing = () => {
                             type="number"
                             placeholder="Price Value (₹)"
                             value={formData.value}
-                            onChange={e => setFormData({ ...formData, value: parseFloat(e.target.value) || 0 })}
+                            onChange={e => setFormData({ ...formData, value: e.target.value })}
                             required
                         />
                         <label style={{ display: 'flex', alignItems: 'center' }}>

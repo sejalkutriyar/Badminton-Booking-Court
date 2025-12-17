@@ -17,7 +17,15 @@ const ManageCourts = () => {
     const loadCourts = async () => {
         try {
             const res = await fetchAdminCourts();
-            setCourts(res.data);
+            // Sort courts numerically
+            const sorted = res.data.sort((a, b) => {
+                const extractNum = (name) => {
+                    const match = name.match(/(\d+)/);
+                    return match ? parseInt(match[0], 10) : Infinity;
+                };
+                return extractNum(a.name) - extractNum(b.name);
+            });
+            setCourts(sorted);
         } catch (err) {
             console.error(err);
         }

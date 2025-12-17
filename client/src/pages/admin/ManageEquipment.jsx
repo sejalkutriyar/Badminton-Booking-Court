@@ -4,7 +4,7 @@ import { fetchAdminEquipment, createEquipment, updateEquipment, deleteEquipment 
 const ManageEquipment = () => {
     const [equipment, setEquipment] = useState([]);
     const [editingId, setEditingId] = useState(null);
-    const [formData, setFormData] = useState({ name: '', total_quantity: 0 });
+    const [formData, setFormData] = useState({ name: '', total_quantity: '' });
 
     const [error, setError] = useState(null);
     const [success, setSuccess] = useState(null);
@@ -28,13 +28,13 @@ const ManageEquipment = () => {
         setSuccess(null);
         try {
             if (editingId) {
-                await updateEquipment(editingId, formData);
+                await updateEquipment(editingId, { ...formData, total_quantity: parseInt(formData.total_quantity) || 0 });
                 setSuccess('Equipment updated successfully');
             } else {
-                await createEquipment(formData);
+                await createEquipment({ ...formData, total_quantity: parseInt(formData.total_quantity) || 0 });
                 setSuccess('Equipment added successfully');
             }
-            setFormData({ name: '', total_quantity: 0 });
+            setFormData({ name: '', total_quantity: '' });
             setEditingId(null);
             loadEquipment();
         } catch (err) {
@@ -61,7 +61,7 @@ const ManageEquipment = () => {
 
     const handleCancel = () => {
         setEditingId(null);
-        setFormData({ name: '', total_quantity: 0 });
+        setFormData({ name: '', total_quantity: '' });
     };
 
     return (
@@ -86,7 +86,7 @@ const ManageEquipment = () => {
                             type="number"
                             placeholder="Data Quantity"
                             value={formData.total_quantity}
-                            onChange={e => setFormData({ ...formData, total_quantity: parseInt(e.target.value) || 0 })}
+                            onChange={e => setFormData({ ...formData, total_quantity: e.target.value })}
                             min="0"
                             required
                         />
