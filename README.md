@@ -23,11 +23,15 @@ A clean, production-like MVP for booking badminton courts, built with Node.js, E
 3.  **Payment**: We assume payment is "Pay on Arrival" mock, so no real payment gateway integration was required for this MVP.
 4.  **Admin Access**: The `/admin` routes technically exist for everyone in this MVP (no authentication middleware was strictly mandated), but in production, this would be protected.
 
+## 🔗 Live Deployment
+- **Frontend App**: [badminton-booking-court-xi.vercel.app](https://badminton-booking-court-xi.vercel.app)
+- **Backend API**: [badminton-booking-court.onrender.com](https://badminton-booking-court.onrender.com)
+
 ## Setup Instructions
 
 ### Prerequisites
 - Node.js installed
-- MongoDB connection string (provided in code)
+- MongoDB connection string (set in `server/.env` as `MONGO_URI`)
 
 ### Backend Setup
 1.  Navigate to the server directory:
@@ -38,9 +42,11 @@ A clean, production-like MVP for booking badminton courts, built with Node.js, E
     ```bash
     npm install
     ```
-3.  Seed the database (Optional, runs once to populate courts):
+3.  Seed the database:
+    *Note: The server automatically seeds baseline Courts, Equipment, Coaches, and Pricing Rules on startup if the database is empty.*
+    To run manually:
     ```bash
-    node scripts/seed.js
+    npm run seed
     ```
 4.  Start the server:
     ```bash
