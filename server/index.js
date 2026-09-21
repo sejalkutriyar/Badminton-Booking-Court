@@ -9,8 +9,22 @@ const PORT = process.env.PORT || 5000;
 app.use(cors());
 app.use(express.json());
 
-// Connect to database
-connectDB();
+const Court = require('./models/Court');
+const seed = require('./scripts/seed');
+
+// Connect to database & auto-seed if empty
+connectDB().then(async () => {
+    try {
+        const courtCount = await Court.countDocuments();
+        if (courtCount === 0) {
+            console.log('Database appears empty. Auto-seeding initial data...');
+            await seed();
+        }
+    } catch (err) {
+        console.error('Auto-seed check failed:', err);
+    }
+});
+
 
 
 // Routes

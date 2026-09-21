@@ -1,5 +1,4 @@
 const mongoose = require('mongoose');
-const connectDB = require('../config/database');
 const Court = require('../models/Court');
 const Equipment = require('../models/Equipment');
 const Coach = require('../models/Coach');
@@ -8,16 +7,13 @@ const Booking = require('../models/Booking');
 
 const seed = async () => {
     try {
-        await connectDB();
-
-        // Clear existing data
+        console.log('Clearing existing baseline data...');
         await Court.deleteMany({});
         await Equipment.deleteMany({});
         await Coach.deleteMany({});
         await PricingRule.deleteMany({});
-        await Booking.deleteMany({}); // Optional: clear bookings too
 
-        // Courts
+        console.log('Seeding initial courts, equipment, coaches, and pricing rules...');
         await Court.insertMany([
             { name: 'Court 1 (Indoor)', type: 'INDOOR' },
             { name: 'Court 2 (Indoor)', type: 'INDOOR' },
@@ -25,7 +21,6 @@ const seed = async () => {
             { name: 'Court 4 (Outdoor)', type: 'OUTDOOR' },
         ]);
 
-        // Equipment
         await Equipment.insertMany([
             { name: 'Racket', total_quantity: 20 },
             { name: 'Shuttlecock', total_quantity: 50 },
@@ -33,14 +28,12 @@ const seed = async () => {
             { name: 'Shoes (Size 9)', total_quantity: 10 },
         ]);
 
-        // Coaches
         await Coach.insertMany([
             { name: 'Coach John' },
             { name: 'Coach Sarah' },
             { name: 'Coach Mike' },
         ]);
 
-        // Pricing Rules
         await PricingRule.insertMany([
             { type: 'INDOOR', value: 100.00 },
             { type: 'PEAK_HOUR', value: 50.00 },
@@ -50,11 +43,18 @@ const seed = async () => {
         ]);
 
         console.log('Seeding complete.');
-        process.exit(0);
     } catch (error) {
         console.error('Seeding failed:', error);
-        process.exit(1);
     }
 };
 
-seed();
+module.exports = seed;
+
+if (require.main === module) {
+    const connectDB = require('../config/database');
+    connectDB().then(async () => {
+        await seed();
+        process.exit(0);
+    });
+}
+
