@@ -16,8 +16,18 @@ router.get('/', async (req, res) => {
 router.post('/', async (req, res) => {
     try {
         const { type, value, is_active } = req.body;
-        // Basic validation for type enum could be here or handled by mongoose
-        const rule = new PricingRule({ type, value, is_active });
+
+        const numericValue = Number(value);
+        if (!Number.isFinite(numericValue) || numericValue < 0) {
+            return res.status(400).json({ error: 'Price must be zero or a positive number.' });
+        }
+
+        const duplicate = await PricingRule.findOne({ type });
+        if (duplicate) {
+            return res.status(409).json({ error: 'A rule for this type already exists. Edit the existing rule instead.' });
+        }
+
+        const rule = new PricingRule({ type, value: numericValue, is_active });
         await rule.save();
         res.status(201).json(rule);
     } catch (error) {
@@ -32,8 +42,22 @@ router.put('/:id', async (req, res) => {
         const rule = await PricingRule.findById(req.params.id);
         if (!rule) return res.status(404).json({ error: 'Pricing Rule not found' });
 
-        if (type) rule.type = type;
-        if (value !== undefined) rule.value = value;
+        if (value !== undefined) {
+            const numericValue = Number(value);
+            if (!Number.isFinite(numericValue) || numericValue < 0) {
+                return res.status(400).json({ error: 'Price must be zero or a positive number.' });
+            }
+            rule.value = numericValue;
+        }
+
+        if (type && type !== rule.type) {
+            const duplicate = await PricingRule.findOne({ type, _id: { $ne: rule._id } });
+            if (duplicate) {
+                return res.status(409).json({ error: 'A rule for this type already exists. Edit the existing rule instead.' });
+            }
+            rule.type = type;
+        }
+
         if (is_active !== undefined) rule.is_active = is_active;
 
         await rule.save();

@@ -1,170 +1,221 @@
-const mongoose = require('mongoose');
 const Booking = require('../models/Booking');
 const Court = require('../models/Court');
 const Coach = require('../models/Coach');
 const Equipment = require('../models/Equipment');
+const Waitlist = require('../models/Waitlist');
 const pricingService = require('./pricingService');
 
-class BookingService {
-    async createBooking(data) {
-        const session = await mongoose.startSession();
-        session.startTransaction();
+const OPENING_MINUTES = 6 * 60; // 06:00
+const CLOSING_MINUTES = 21 * 60; // 21:00
+const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
+const TIME_PATTERN = /^([01]\d|2[0-3]):([0-5]\d)$/;
 
-        try {
-            const { date, startTime, endTime, courtId, coachId, equipment = [] } = data; // equipment: [{ id, quantity }]
+const toMinutes = (time) => {
+    const [hours, minutes] = time.split(':').map(Number);
+    return hours * 60 + minutes;
+};
 
-            // 1. Check Court Availability
-            // Mongoose doesn't have Op.or like Sequelize, uses $or
-            const conflictingCourt = await Booking.findOne({
-                court: courtId,
-                date,
-                status: 'CONFIRMED',
-                $or: [
-                    {
-                        start_time: { $lt: endTime },
-                        end_time: { $gt: startTime }
-                    }
-                ]
-            }).session(session);
+const localDateString = (date) => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+};
 
-            if (conflictingCourt) {
-                throw new Error('Court is already booked for this time slot.');
-            }
+const isValidDate = (date) => {
+    if (typeof date !== 'string' || !DATE_PATTERN.test(date)) return false;
+    const parsed = new Date(`${date}T00:00:00`);
+    return !Number.isNaN(parsed.getTime()) && localDateString(parsed) === date;
+};
 
-            // 2. Check Coach Availability
-            if (coachId) {
-                const conflictingCoach = await Booking.findOne({
-                    coach: coachId,
-                    date,
-                    status: 'CONFIRMED',
-                    $or: [
-                        {
-                            start_time: { $lt: endTime },
-                            end_time: { $gt: startTime }
-                        }
-                    ]
-                }).session(session);
+// Booking creation runs one request at a time so two users cannot pass the
+// availability checks for the same slot simultaneously.
+let queue = Promise.resolve();
+const runExclusive = (task) => {
+    const result = queue.then(task, task);
+    queue = result.catch(() => {});
+    return result;
+};
 
-                if (conflictingCoach) {
-                    throw new Error('Coach is already unavailable for this time slot.');
-                }
-            }
+const validatePayload = (data) => {
+    const { date, startTime, endTime, courtId } = data;
 
-            // 3. Check Equipment Availability
-            for (const item of equipment) {
-                const eqItem = await Equipment.findById(item.id).session(session);
-                if (!eqItem) throw new Error(`Equipment with ID ${item.id} not found.`);
+    if (!isValidDate(date)) throw new Error('Please provide a valid booking date.');
+    if (!TIME_PATTERN.test(startTime || '')) throw new Error('Please provide a valid start time.');
+    if (!TIME_PATTERN.test(endTime || '')) throw new Error('Please provide a valid end time.');
+    if (!courtId) throw new Error('Please select a court.');
 
-                const activeBookings = await Booking.find({
-                    date,
-                    status: 'CONFIRMED',
-                    'equipment.item': item.id,
-                    $or: [
-                        {
-                            start_time: { $lt: endTime },
-                            end_time: { $gt: startTime }
-                        }
-                    ]
-                }).session(session);
+    const startMinutes = toMinutes(startTime);
+    const endMinutes = toMinutes(endTime);
 
-                let usedQuantity = 0;
-                activeBookings.forEach(b => {
-                    const eqInBooking = b.equipment.find(e => e.item.toString() === item.id);
-                    if (eqInBooking) {
-                        usedQuantity += eqInBooking.quantity;
-                    }
-                });
+    if (startMinutes >= endMinutes) throw new Error('End time must be after start time.');
+    if (startMinutes < OPENING_MINUTES || endMinutes > CLOSING_MINUTES) {
+        throw new Error('Bookings are only available between 06:00 and 21:00.');
+    }
 
-                if (usedQuantity + item.quantity > eqItem.total_quantity) {
-                    throw new Error(`Insufficient quantity for ${eqItem.name}. Available: ${eqItem.total_quantity - usedQuantity}`);
-                }
-            }
+    const now = new Date();
+    const today = localDateString(now);
+    const nowMinutes = now.getHours() * 60 + now.getMinutes();
 
-            // 4. Calculate Price
-            const court = await Court.findById(courtId).session(session);
-            if (!court) throw new Error('Court not found');
+    if (date < today) throw new Error('Cannot book a date in the past.');
+    if (date === today && startMinutes <= nowMinutes) {
+        throw new Error('Cannot book a time that has already started.');
+    }
 
-            const priceDetails = await pricingService.calculatePrice({
-                courtType: court.type,
-                date,
-                startTime,
-                endTime,
-                hasCoach: !!coachId,
-                equipmentCount: equipment.reduce((sum, item) => sum + item.quantity, 0)
-            });
-
-            // 5. Create Booking
-            const newBooking = new Booking({
-                date,
-                start_time: startTime,
-                end_time: endTime,
-                court: courtId,
-                coach: coachId || null,
-                equipment: equipment.map(e => ({ item: e.id, quantity: e.quantity })),
-                total_price: priceDetails.totalPrice,
-                status: 'CONFIRMED'
-            });
-
-            await newBooking.save({ session });
-            await session.commitTransaction();
-            session.endSession();
-
-            return { booking: newBooking, breakdown: priceDetails.breakdown };
-
-        } catch (error) {
-            await session.abortTransaction();
-            session.endSession();
-            throw error;
+    const items = Array.isArray(data.equipment) ? data.equipment : [];
+    const merged = new Map();
+    items.forEach(({ id, quantity }) => {
+        if (!id) throw new Error('Invalid equipment selection.');
+        if (!Number.isInteger(quantity) || quantity < 1) {
+            throw new Error('Equipment quantity must be a whole number of at least 1.');
         }
+        merged.set(String(id), (merged.get(String(id)) || 0) + quantity);
+    });
+
+    return {
+        date,
+        startTime,
+        endTime,
+        courtId,
+        coachId: data.coachId || null,
+        equipment: Array.from(merged, ([id, quantity]) => ({ id, quantity })),
+    };
+};
+
+class BookingService {
+    createBooking(data) {
+        return runExclusive(() => this.createBookingNow(data));
+    }
+
+    async createBookingNow(data) {
+        const { date, startTime, endTime, courtId, coachId, equipment } = validatePayload(data);
+
+        const court = await Court.findById(courtId);
+        if (!court) throw new Error('Court not found.');
+        if (!court.is_active) throw new Error('This court is currently unavailable.');
+
+        if (coachId) {
+            const coach = await Coach.findById(coachId);
+            if (!coach) throw new Error('Coach not found.');
+            if (!coach.is_active) throw new Error('This coach is currently unavailable.');
+        }
+
+        const overlap = {
+            date,
+            status: 'CONFIRMED',
+            start_time: { $lt: endTime },
+            end_time: { $gt: startTime },
+        };
+
+        const courtConflict = await Booking.exists({ ...overlap, court: courtId });
+        if (courtConflict) throw new Error('This court is already booked for the selected time slot.');
+
+        if (coachId) {
+            const coachConflict = await Booking.exists({ ...overlap, coach: coachId });
+            if (coachConflict) throw new Error('This coach is already booked for the selected time slot.');
+        }
+
+        if (equipment.length > 0) {
+            const equipmentIds = equipment.map((item) => item.id);
+            const equipmentDocs = await Equipment.find({ _id: { $in: equipmentIds } });
+
+            if (equipmentDocs.length !== equipment.length) {
+                throw new Error('One or more selected equipment items no longer exist.');
+            }
+
+            const equipmentBookings = await Booking.find({ ...overlap, 'equipment.item': { $in: equipmentIds } });
+            const usedQuantities = {};
+            equipmentBookings.forEach((booking) => {
+                booking.equipment.forEach((line) => {
+                    const key = line.item.toString();
+                    usedQuantities[key] = (usedQuantities[key] || 0) + line.quantity;
+                });
+            });
+
+            equipment.forEach((item) => {
+                const equipmentDoc = equipmentDocs.find((doc) => doc._id.toString() === item.id);
+                const used = usedQuantities[item.id] || 0;
+                const remaining = equipmentDoc.total_quantity - used;
+
+                if (item.quantity > remaining) {
+                    throw new Error(
+                        `Only ${Math.max(remaining, 0)} ${equipmentDoc.name} available for this slot.`
+                    );
+                }
+            });
+        }
+
+        const priceDetails = await pricingService.calculatePrice({
+            courtType: court.type,
+            date,
+            startTime,
+            endTime,
+            hasCoach: !!coachId,
+            equipmentCount: equipment.reduce((sum, item) => sum + item.quantity, 0),
+        });
+
+        const booking = await Booking.create({
+            date,
+            start_time: startTime,
+            end_time: endTime,
+            court: courtId,
+            coach: coachId,
+            equipment: equipment.map((item) => ({ item: item.id, quantity: item.quantity })),
+            total_price: priceDetails.totalPrice,
+            status: 'CONFIRMED',
+        });
+
+        return { booking, breakdown: priceDetails.breakdown };
     }
 
     async getHistory() {
-        return await Booking.find()
+        return Booking.find()
             .populate('court')
             .populate('coach')
             .populate('equipment.item')
             .sort({ date: -1, start_time: -1 });
     }
 
+    async getAvailability(date) {
+        if (!isValidDate(date)) throw new Error('Please provide a valid date.');
+
+        return Booking.find({ date, status: 'CONFIRMED' })
+            .select('court coach start_time end_time')
+            .sort({ start_time: 1 });
+    }
+
     async clearHistory() {
-        const result = await Booking.deleteMany({});
-        return result;
+        return Booking.deleteMany({});
     }
 
     async deleteBooking(id) {
-        const session = await mongoose.startSession();
-        session.startTransaction();
-        try {
-            const booking = await Booking.findById(id).session(session);
-            if (!booking) throw new Error('Booking not found');
+        return runExclusive(async () => {
+            const booking = await Booking.findById(id);
+            if (!booking) throw new Error('Booking not found.');
+            if (booking.status === 'CANCELLED') throw new Error('This booking is already cancelled.');
 
-            const { date, start_time, end_time, court } = booking;
-            await Booking.findByIdAndDelete(id).session(session);
+            booking.status = 'CANCELLED';
+            await booking.save();
 
-            // Check Waitlist
-            const Waitlist = require('../models/Waitlist');
-            const nextUser = await Waitlist.findOne({
-                date,
-                start_time,
-                end_time,
-                court
-            }).sort({ created_at: 1 }).session(session);
+            const waitlistEntry = await Waitlist.findOne({
+                date: booking.date,
+                start_time: booking.start_time,
+                end_time: booking.end_time,
+                court: booking.court,
+                notified_at: null,
+            }).sort({ created_at: 1 });
 
-            if (nextUser) {
-                console.log(`[WAITLIST NOTIFICATION] Slot opened for ${date} ${start_time}! Notifying ${nextUser.user_email} (${nextUser.user_name})`);
-                // In a real app, send email here.
-                // Optionally remove from waitlist or keep until they book?
-                // Let's keep them notified but not remove until they book or expire.
+            if (waitlistEntry) {
+                waitlistEntry.notified_at = new Date();
+                await waitlistEntry.save();
+                console.log(
+                    `[WAITLIST NOTIFICATION] Slot ${booking.date} ${booking.start_time}-${booking.end_time} opened. ` +
+                    `Notifying ${waitlistEntry.user_email} (${waitlistEntry.user_name}).`
+                );
             }
 
-            await session.commitTransaction();
-            session.endSession();
-            return { message: 'Booking cancelled' };
-        } catch (error) {
-            await session.abortTransaction();
-            session.endSession();
-            throw error;
-        }
+            return { message: 'Booking cancelled', booking };
+        });
     }
 }
 

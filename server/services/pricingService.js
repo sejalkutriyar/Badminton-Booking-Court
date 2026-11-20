@@ -1,93 +1,80 @@
 const PricingRule = require('../models/PricingRule');
 
+const round = (value) => Math.round(value * 100) / 100;
+
 class PricingService {
     async calculatePrice(details) {
         const rules = await PricingRule.find({ is_active: true });
         const ruleMap = {};
-        rules.forEach(r => ruleMap[r.type] = r.value);
+        rules.forEach(rule => { ruleMap[rule.type] = rule.value; });
 
         let totalPrice = 0;
         const breakdown = [];
 
         const BASE_PRICE_PER_HOUR = 100;
 
-        // Convert HH:mm to usable logical parts
-        const startParts = details.startTime.split(':');
-        const endParts = details.endTime.split(':');
+        const startParts = String(details.startTime || '').split(':');
+        const endParts = String(details.endTime || '').split(':');
 
-        // Create dummy dates to easier calculate diff
-        const start = new Date(0, 0, 0, startParts[0], startParts[1]);
-        const end = new Date(0, 0, 0, endParts[0], endParts[1]);
+        const start = new Date(0, 0, 0, Number(startParts[0]), Number(startParts[1]));
+        const end = new Date(0, 0, 0, Number(endParts[0]), Number(endParts[1]));
 
         const durationHours = (end - start) / (1000 * 60 * 60);
+        if (!Number.isFinite(durationHours) || durationHours <= 0) {
+            throw new Error('Invalid time range');
+        }
 
-        if (durationHours <= 0) throw new Error('Invalid time range');
+        const addLine = (label, amount) => {
+            const rounded = round(amount);
+            totalPrice += rounded;
+            breakdown.push({ label, amount: rounded });
+        };
 
         // 1. Base Cost
-        const baseCost = BASE_PRICE_PER_HOUR * durationHours;
-        totalPrice += baseCost;
-        breakdown.push({ label: 'Base Court Fee', amount: baseCost });
+        addLine('Base Court Fee', BASE_PRICE_PER_HOUR * durationHours);
 
         // 2. Indoor Premium
         if (details.courtType === 'INDOOR') {
             const indoorPremium = (ruleMap['INDOOR'] || 0) * durationHours;
-            if (indoorPremium > 0) {
-                totalPrice += indoorPremium;
-                breakdown.push({ label: 'Indoor Premium', amount: indoorPremium });
-            }
+            if (indoorPremium > 0) addLine('Indoor Premium', indoorPremium);
         }
 
-        // 3. Weekend Premium
-        const dateObj = new Date(details.date);
-        const day = dateObj.getDay();
-        if (day === 0 || day === 6) {
+        // 3. Weekend Premium (parse YYYY-MM-DD as a local date, not UTC)
+        const [year, month, day] = String(details.date || '').split('-').map(Number);
+        const dateObj = new Date(year, month - 1, day);
+        const dayOfWeek = dateObj.getDay();
+        if (dayOfWeek === 0 || dayOfWeek === 6) {
             const weekendPremium = (ruleMap['WEEKEND'] || 0) * durationHours;
-            if (weekendPremium > 0) {
-                totalPrice += weekendPremium;
-                breakdown.push({ label: 'Weekend Premium', amount: weekendPremium });
-            }
+            if (weekendPremium > 0) addLine('Weekend Premium', weekendPremium);
         }
 
         // 4. Peak Hour Premium (6-9 PM)
         const peakStart = 18;
         const peakEnd = 21;
 
-        const startHour = parseInt(startParts[0]);
-        const endHour = parseInt(endParts[0]);
+        const startMinutes = Number(startParts[0]) * 60 + Number(startParts[1] || 0);
+        const endMinutes = Number(endParts[0]) * 60 + Number(endParts[1] || 0);
 
-        const sMin = startHour * 60 + parseInt(startParts[1] || 0);
-        const eMin = endHour * 60 + parseInt(endParts[1] || 0);
-
-        const pSMin = peakStart * 60;
-        const pEMin = peakEnd * 60;
-
-        const overlapStart = Math.max(sMin, pSMin);
-        const overlapEnd = Math.min(eMin, pEMin);
+        const overlapStart = Math.max(startMinutes, peakStart * 60);
+        const overlapEnd = Math.min(endMinutes, peakEnd * 60);
 
         if (overlapEnd > overlapStart) {
             const overlapHours = (overlapEnd - overlapStart) / 60;
             const peakPremium = (ruleMap['PEAK_HOUR'] || 0) * overlapHours;
-            if (peakPremium > 0) {
-                totalPrice += peakPremium;
-                breakdown.push({ label: 'Peak Hour Premium', amount: peakPremium });
-            }
+            if (peakPremium > 0) addLine('Peak Hour Premium', peakPremium);
         }
 
         // 5. Coach
         if (details.hasCoach) {
-            const coachFee = (ruleMap['COACH'] || 0) * durationHours;
-            totalPrice += coachFee;
-            breakdown.push({ label: 'Coach Fee', amount: coachFee });
+            addLine('Coach Fee', (ruleMap['COACH'] || 0) * durationHours);
         }
 
-        // 6. Equipment
+        // 6. Equipment (charged per item, not per hour)
         if (details.equipmentCount > 0) {
-            const equipmentFee = (ruleMap['EQUIPMENT'] || 0) * details.equipmentCount;
-            totalPrice += equipmentFee;
-            breakdown.push({ label: `Equipment (${details.equipmentCount})`, amount: equipmentFee });
+            addLine(`Equipment (${details.equipmentCount} items)`, (ruleMap['EQUIPMENT'] || 0) * details.equipmentCount);
         }
 
-        return { totalPrice: parseFloat(totalPrice.toFixed(2)), breakdown };
+        return { totalPrice: round(totalPrice), breakdown };
     }
 }
 

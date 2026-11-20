@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const Equipment = require('../../models/Equipment');
+const Booking = require('../../models/Booking');
 
 // Get all equipment
 router.get('/', async (req, res) => {
@@ -16,7 +17,12 @@ router.get('/', async (req, res) => {
 router.post('/', async (req, res) => {
     try {
         const { name, total_quantity } = req.body;
-        const equipment = new Equipment({ name, total_quantity });
+        const quantity = Number(total_quantity);
+        if (!Number.isInteger(quantity) || quantity < 0) {
+            return res.status(400).json({ error: 'Total quantity must be zero or a positive whole number.' });
+        }
+
+        const equipment = new Equipment({ name: String(name || '').trim(), total_quantity: quantity });
         await equipment.save();
         res.status(201).json(equipment);
     } catch (error) {
@@ -31,8 +37,14 @@ router.put('/:id', async (req, res) => {
         const equipment = await Equipment.findById(req.params.id);
         if (!equipment) return res.status(404).json({ error: 'Equipment not found' });
 
-        if (name) equipment.name = name;
-        if (total_quantity !== undefined) equipment.total_quantity = total_quantity;
+        if (name) equipment.name = String(name).trim();
+        if (total_quantity !== undefined) {
+            const quantity = Number(total_quantity);
+            if (!Number.isInteger(quantity) || quantity < 0) {
+                return res.status(400).json({ error: 'Total quantity must be zero or a positive whole number.' });
+            }
+            equipment.total_quantity = quantity;
+        }
 
         await equipment.save();
         res.json(equipment);
@@ -44,8 +56,17 @@ router.put('/:id', async (req, res) => {
 // Delete equipment
 router.delete('/:id', async (req, res) => {
     try {
-        const result = await Equipment.findByIdAndDelete(req.params.id);
-        if (!result) return res.status(404).json({ error: 'Equipment not found' });
+        const equipment = await Equipment.findById(req.params.id);
+        if (!equipment) return res.status(404).json({ error: 'Equipment not found' });
+
+        const usedByBookings = await Booking.exists({ 'equipment.item': equipment._id });
+        if (usedByBookings) {
+            return res.status(409).json({
+                error: 'This equipment appears in existing bookings and cannot be deleted.',
+            });
+        }
+
+        await equipment.deleteOne();
         res.json({ message: 'Equipment deleted successfully' });
     } catch (error) {
         res.status(500).json({ error: error.message });

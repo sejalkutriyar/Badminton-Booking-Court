@@ -1,145 +1,279 @@
-import React, { useState, useEffect } from 'react';
-import { fetchHistory, cancelBooking, clearHistory } from '../api';
+import React, { useEffect, useMemo, useState } from 'react';
+import { Link } from 'react-router-dom';
+import { fetchHistory, cancelBooking, clearHistory, getErrorMessage } from '../api';
+import { formatDate, formatTimeRange, formatMoney, isPastBooking } from '../utils/format';
 import './HistoryPage.css';
-import { format } from 'date-fns';
+
+const FILTERS = [
+    { id: 'all', label: 'All' },
+    { id: 'upcoming', label: 'Upcoming' },
+    { id: 'past', label: 'Past' },
+    { id: 'cancelled', label: 'Cancelled' },
+];
 
 const HistoryPage = () => {
     const [bookings, setBookings] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [loadError, setLoadError] = useState(null);
+    const [reloadKey, setReloadKey] = useState(0);
+    const [filter, setFilter] = useState('all');
     const [isClearing, setIsClearing] = useState(false);
-    const [banner, setBanner] = useState(null); // { type: 'success'|'error', message: '' }
+    const [cancellingId, setCancellingId] = useState(null);
+    const [banner, setBanner] = useState(null);
 
     useEffect(() => {
-        loadHistory();
-    }, []);
+        let active = true;
+        setLoading(true);
+        setLoadError(null);
 
-    const loadHistory = async () => {
-        try {
-            const res = await fetchHistory();
-            setBookings(res.data);
-        } catch (err) {
-            console.error('Failed to load history', err);
-        }
-    };
+        fetchHistory()
+            .then((res) => {
+                if (!active) return;
+                setBookings(res.data);
+            })
+            .catch((err) => {
+                if (active) setLoadError(getErrorMessage(err, 'Could not load your bookings.'));
+            })
+            .finally(() => {
+                if (active) setLoading(false);
+            });
+
+        return () => {
+            active = false;
+        };
+    }, [reloadKey]);
+
+    useEffect(() => {
+        if (!banner) return undefined;
+        const timer = setTimeout(() => setBanner(null), 4000);
+        return () => clearTimeout(timer);
+    }, [banner]);
+
+    const withState = useMemo(() => {
+        const now = new Date();
+        return bookings.map((booking) => ({
+            ...booking,
+            isPast: isPastBooking(booking, now),
+            isCancelled: booking.status === 'CANCELLED',
+        }));
+    }, [bookings]);
+
+    const counts = useMemo(() => ({
+        all: withState.length,
+        upcoming: withState.filter((booking) => !booking.isCancelled && !booking.isPast).length,
+        past: withState.filter((booking) => !booking.isCancelled && booking.isPast).length,
+        cancelled: withState.filter((booking) => booking.isCancelled).length,
+    }), [withState]);
+
+    const visibleBookings = useMemo(() => {
+        if (filter === 'upcoming') return withState.filter((booking) => !booking.isCancelled && !booking.isPast);
+        if (filter === 'past') return withState.filter((booking) => !booking.isCancelled && booking.isPast);
+        if (filter === 'cancelled') return withState.filter((booking) => booking.isCancelled);
+        return withState;
+    }, [withState, filter]);
 
     const handleClear = async () => {
-        const ok = window.confirm('Are you sure you want to clear ALL booking history? This cannot be undone.');
-        if (!ok) return;
+        const confirmed = window.confirm('Clear ALL booking history? This permanently deletes every booking and cannot be undone.');
+        if (!confirmed) return;
+
+        setIsClearing(true);
+        setBanner(null);
+
         try {
-            setIsClearing(true);
-            setBanner(null);
-            const res = await clearHistory();
-            if (res && res.data && res.data.deletedCount >= 0) {
-                setBookings([]);
-                setBanner({ type: 'success', message: 'Booking history cleared.' });
-            } else {
-                setBanner({ type: 'error', message: 'Failed to clear history.' });
-            }
+            await clearHistory();
+            setBookings([]);
+            setFilter('all');
+            setBanner({ type: 'success', message: 'Booking history cleared.' });
         } catch (err) {
-            console.error('Clear history failed', err);
-            setBanner({ type: 'error', message: err?.response?.data?.error || err.message || 'Failed to clear history.' });
+            setBanner({ type: 'error', message: getErrorMessage(err, 'Could not clear booking history.') });
         } finally {
             setIsClearing(false);
-            setTimeout(() => setBanner(null), 3000);
         }
     };
 
-    const handleCancel = async (id) => {
-        if (!window.confirm('Cancel this booking?')) return;
+    const handleCancel = async (booking) => {
+        const confirmed = window.confirm(
+            `Cancel ${booking.court?.name || 'this booking'} on ${formatDate(booking.date)} at ${formatTimeRange(booking.start_time, booking.end_time)}?`
+        );
+        if (!confirmed) return;
+
+        setCancellingId(booking._id);
+        setBanner(null);
+
         try {
-            await cancelBooking(id);
-            setBanner({ type: 'success', message: 'Booking cancelled.' });
-            loadHistory(); // Reload
+            await cancelBooking(booking._id);
+            setBookings((prev) =>
+                prev.map((item) => (item._id === booking._id ? { ...item, status: 'CANCELLED' } : item))
+            );
+            setBanner({ type: 'success', message: 'Booking cancelled. The slot is available again.' });
         } catch (err) {
-            setBanner({ type: 'error', message: err.response?.data?.error || 'Cancellation failed' });
+            setBanner({ type: 'error', message: getErrorMessage(err, 'Could not cancel the booking.') });
         } finally {
-            setTimeout(() => setBanner(null), 3000);
+            setCancellingId(null);
         }
     };
+
+    const galleryEmpty = (() => {
+        if (filter === 'upcoming') return 'You have no upcoming bookings.';
+        if (filter === 'past') return 'No past bookings yet.';
+        if (filter === 'cancelled') return 'No cancelled bookings yet.';
+        return 'No bookings found yet.';
+    })();
 
     return (
         <div className="page-container history-page">
-            <h2>Your Bookings</h2>
+            <header className="page-heading">
+                <div>
+                    <h2>Your Bookings</h2>
+                    <p className="page-subtitle">
+                        {bookings.length === 0
+                            ? 'Your court reservations will appear here.'
+                            : `${counts.upcoming} upcoming · ${counts.past} past · ${counts.cancelled} cancelled`}
+                    </p>
+                </div>
+                <Link to="/" className="ghost-link">Book a court</Link>
+            </header>
 
             {banner && (
-                <div className={banner.type === 'success' ? 'success-banner' : 'error-banner'}>
-                    {banner.message}
-                </div>
-            )}
-
-            {bookings.length > 0 && (
-                <div style={{ textAlign: 'right', marginBottom: '1rem' }}>
-                    <button className="btn-primary" disabled={isClearing} onClick={handleClear}>
-                        {isClearing ? 'Clearing...' : 'Clear History'}
+                <div className={`banner ${banner.type === 'success' ? 'success-banner' : 'error-banner'}`} role={banner.type === 'error' ? 'alert' : 'status'}>
+                    <div><span>{banner.message}</span></div>
+                    <button type="button" className="banner-close" aria-label="Dismiss message" onClick={() => setBanner(null)}>
+                        ×
                     </button>
                 </div>
             )}
 
-            {bookings.length === 0 ? (
+            {loading ? (
+                <div>
+                    <div className="loading-state" role="status">
+                        <span className="spinner" aria-hidden="true" />
+                        Loading your bookings…
+                    </div>
+                    <div className="bookings-grid" aria-hidden="true">
+                        {[0, 1, 2].map((index) => (
+                            <div key={index} className="booking-card skeleton-card">
+                                <div className="skeleton-line long" />
+                                <div className="skeleton-line medium" />
+                                <div className="skeleton-line short" />
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            ) : loadError ? (
                 <div className="empty-state">
-                    <p>No bookings found yet.</p>
-                    <a href="/" className="cta-link">Book a Court</a>
+                    <p>{loadError}</p>
+                    <button type="button" className="btn-primary" onClick={() => setReloadKey((key) => key + 1)}>
+                        Try again
+                    </button>
+                </div>
+            ) : bookings.length === 0 ? (
+                <div className="empty-state">
+                    <span className="empty-icon" aria-hidden="true">🏸</span>
+                    <p>No bookings yet.</p>
+                    <p className="empty-hint">Pick a court, choose a time and your booking will show up here.</p>
+                    <Link to="/" className="btn-primary">Book a court</Link>
                 </div>
             ) : (
-                <div className="bookings-grid">
-                    {bookings.map(booking => (
-                        <div key={booking._id} className="booking-card">
-                            <div className="booking-header">
-                                <span className="booking-date">
-                                    {format(new Date(booking.date), 'MMM dd, yyyy')}
-                                </span>
-                                <span className={`status ${booking.status.toLowerCase()}`}>
-                                    {booking.status}
-                                </span>
-                            </div>
-
-                            <div className="booking-info">
-                                <div className="info-row">
-                                    <span className="info-label">Time:</span>
-                                    <span>{booking.start_time} - {booking.end_time}</span>
-                                </div>
-                                <div className="info-row">
-                                    <span className="info-label">Court:</span>
-                                    <span>{booking.court ? booking.court.name : 'Unknown Court'}</span>
-                                </div>
-                                {booking.coach && (
-                                    <div className="info-row">
-                                        <span className="info-label">Coach:</span>
-                                        <span>{booking.coach.name}</span>
-                                    </div>
-                                )}
-                                {booking.equipment && booking.equipment.length > 0 && (
-                                    <div className="items-list">
-                                        <strong>Extras: </strong>
-                                        {booking.equipment.map((e, idx) => (
-                                            <span key={idx}>
-                                                {e.item ? e.item.name : 'Item'} (x{e.quantity})
-                                                {idx < booking.equipment.length - 1 ? ', ' : ''}
-                                            </span>
-                                        ))}
-                                    </div>
-                                )}
-                            </div>
-
-                            <div className="booking-footer">
-                                <span className="total-price">₹{booking.total_price}</span>
+                <>
+                    <div className="history-toolbar">
+                        <div className="filter-tabs" aria-label="Filter bookings">
+                            {FILTERS.map((item) => (
                                 <button
-                                    style={{
-                                        marginLeft: '10px',
-                                        backgroundColor: '#e74c3c',
-                                        color: 'white',
-                                        border: 'none',
-                                        padding: '5px 10px',
-                                        borderRadius: '4px',
-                                        cursor: 'pointer'
-                                    }}
-                                    onClick={() => handleCancel(booking._id)}
+                                    type="button"
+                                    key={item.id}
+                                    className={`filter-tab ${filter === item.id ? 'active' : ''}`}
+                                    aria-pressed={filter === item.id}
+                                    onClick={() => setFilter(item.id)}
                                 >
-                                    Cancel
+                                    {item.label}
+                                    <span className="filter-count">{counts[item.id]}</span>
                                 </button>
-                            </div>
+                            ))}
                         </div>
-                    ))}
-                </div>
+                        <button
+                            type="button"
+                            className="btn-danger-outline"
+                            onClick={handleClear}
+                            disabled={isClearing}
+                        >
+                            {isClearing ? 'Clearing…' : 'Clear history'}
+                        </button>
+                    </div>
+
+                    {visibleBookings.length === 0 ? (
+                        <div className="empty-state compact">
+                            <p>{galleryEmpty}</p>
+                            {filter !== 'all' && (
+                                <button type="button" className="btn-ghost" onClick={() => setFilter('all')}>
+                                    Show all bookings
+                                </button>
+                            )}
+                        </div>
+                    ) : (
+                        <div className="bookings-grid">
+                            {visibleBookings.map((booking) => {
+                                const canCancel = !booking.isCancelled && !booking.isPast;
+                                const equipmentItems = (booking.equipment || [])
+                                    .filter((line) => line.item)
+                                    .map((line) => `${line.item.name} ×${line.quantity}`)
+                                    .join(', ');
+
+                                return (
+                                    <article
+                                        key={booking._id}
+                                        className={`booking-card ${booking.isCancelled ? 'is-cancelled' : ''} ${booking.isPast ? 'is-past' : ''}`}
+                                    >
+                                        <div className="booking-header">
+                                            <div className="booking-when">
+                                                <span className="booking-date">{formatDate(booking.date)}</span>
+                                                <span className="booking-time">{formatTimeRange(booking.start_time, booking.end_time)}</span>
+                                            </div>
+                                            <span className={`status ${booking.status.toLowerCase()}${!booking.isCancelled && booking.isPast ? ' completed' : ''}`}>
+                                                {booking.status === 'CANCELLED' ? 'Cancelled' : booking.isPast ? 'Completed' : 'Confirmed'}
+                                            </span>
+                                        </div>
+
+                                        <div className="booking-info">
+                                            <div className="info-row">
+                                                <span className="info-label">Court</span>
+                                                <span>{booking.court ? booking.court.name : 'Court removed'}</span>
+                                            </div>
+                                            {booking.coach && (
+                                                <div className="info-row">
+                                                    <span className="info-label">Coach</span>
+                                                    <span>{booking.coach.name}</span>
+                                                </div>
+                                            )}
+                                            {equipmentItems && (
+                                                <div className="info-row">
+                                                    <span className="info-label">Equipment</span>
+                                                    <span className="info-value">{equipmentItems}</span>
+                                                </div>
+                                            )}
+                                        </div>
+
+                                        <div className="booking-footer">
+                                            <div className="booking-total">
+                                                <span>Total</span>
+                                                <strong>{formatMoney(booking.total_price)}</strong>
+                                            </div>
+                                            {canCancel && (
+                                                <button
+                                                    type="button"
+                                                    className="btn-danger"
+                                                    onClick={() => handleCancel(booking)}
+                                                    disabled={cancellingId === booking._id}
+                                                >
+                                                    {cancellingId === booking._id ? 'Cancelling…' : 'Cancel booking'}
+                                                </button>
+                                            )}
+                                        </div>
+                                    </article>
+                                );
+                            })}
+                        </div>
+                    )}
+                </>
             )}
         </div>
     );

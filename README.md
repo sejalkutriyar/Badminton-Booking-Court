@@ -3,13 +3,13 @@
 A clean, production-like MVP for booking badminton courts, built with Node.js, Express, MongoDB (Mongoose), and React.
 
 ## Features
-- **Atomic Bookings**: Ensures no double bookings for courts or coaches.
+- **Atomic Bookings**: Court, coach, and equipment overlap checks run one request at a time, so a slot cannot be double-booked.
 - **Dynamic Pricing**: Calculates price based on time, court type, coach, and equipment.
-- **Inventory Management**: Tracks equipment quantity availability.
-- **Booking History**: View all past and upcoming bookings, with cancellation support.
-- **Admin Panel**: Full CRUD operations for Courts, Coaches, Equipment, and Pricing Rules.
-- **Waitlist System**: Users can join a waitlist for fully booked slots; automatic notification logs on cancellation.
-- **Enhanced UI**: Stepper controls for equipment, responsive design, and admin dashboard.
+- **Inventory Management**: Tracks equipment quantity availability per time slot.
+- **Booking History**: View upcoming, past, and cancelled bookings, with soft cancellation that keeps the record visible.
+- **Admin Panel**: CRUD for Courts, Coaches, Equipment, and Pricing Rules, with a live dashboard and delete guards.
+- **Waitlist System**: Users can join a waitlist for fully booked slots; the first waiting entry is marked as notified when a booking is cancelled.
+- **Enhanced UI**: Stepper controls, availability badges, responsive layout, and accessible controls.
 
 ## Tech Stack
 - **Backend**: Node.js, Express.js
@@ -42,13 +42,18 @@ A clean, production-like MVP for booking badminton courts, built with Node.js, E
     ```bash
     npm install
     ```
-3.  Seed the database:
+3.  Create `server/.env` (see `server/.env.example`):
+    ```env
+    MONGO_URI=mongodb://127.0.0.1:27017/badminton
+    PORT=5000
+    ```
+4.  Seed the database:
     *Note: The server automatically seeds baseline Courts, Equipment, Coaches, and Pricing Rules on startup if the database is empty.*
     To run manually:
     ```bash
     npm run seed
     ```
-4.  Start the server:
+5.  Start the server:
     ```bash
     npm start
     # Runs on http://localhost:5000
@@ -63,7 +68,11 @@ A clean, production-like MVP for booking badminton courts, built with Node.js, E
     ```bash
     npm install
     ```
-3.  Start the development server:
+3.  Optional: create `client/.env` (see `client/.env.example`) to point at a different API:
+    ```env
+    VITE_API_URL=http://localhost:5000/api
+    ```
+4.  Start the development server:
     ```bash
     npm run dev
     # Runs on http://localhost:5173
@@ -71,12 +80,14 @@ A clean, production-like MVP for booking badminton courts, built with Node.js, E
 
 ## API Endpoints
 
-- `GET /api/courts`: specific court details
-- `GET /api/coaches`: list of coaches
-- `GET /api/equipment`: list of equipment
-- `POST /api/bookings`: create a booking
+- `GET /api/health`: health check with uptime
+- `GET /api/courts`: list active courts
+- `GET /api/coaches`: list active coaches
+- `GET /api/equipment`: list equipment
+- `POST /api/bookings`: create a booking (validates hours, past dates, overlaps, inventory)
 - `GET /api/bookings`: get history
-- `DELETE /api/bookings/:id`: cancel a booking
+- `GET /api/bookings/availability?date=YYYY-MM-DD`: confirmed slots for a date
+- `DELETE /api/bookings/:id`: cancel a booking (soft cancel, keeps history)
 - `DELETE /api/bookings`: clear all history
 - `POST /api/pricing/calculate`: get price breakdown
 - `POST /api/waitlist/join`: join waitlist

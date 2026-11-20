@@ -4,12 +4,16 @@ const API = axios.create({
     baseURL: import.meta.env.VITE_API_URL || 'http://localhost:5000/api',
 });
 
+export const getErrorMessage = (err, fallback = 'Something went wrong. Please try again.') =>
+    err?.response?.data?.error || err?.message || fallback;
+
 export const fetchCourts = () => API.get('/courts');
 export const fetchCoaches = () => API.get('/coaches');
 export const fetchEquipment = () => API.get('/equipment');
 export const calculatePrice = (data) => API.post('/pricing/calculate', data);
 export const createBooking = (data) => API.post('/bookings', data);
 export const fetchHistory = () => API.get('/bookings');
+export const fetchAvailability = (date) => API.get('/bookings/availability', { params: { date } });
 export const cancelBooking = (id) => API.delete(`/bookings/${id}`);
 export const clearHistory = () => API.delete('/bookings');
 

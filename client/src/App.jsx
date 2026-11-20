@@ -1,4 +1,5 @@
 import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
+import Navbar from './components/Navbar';
 import BookingPage from './pages/BookingPage';
 import HistoryPage from './pages/HistoryPage';
 import AdminLayout from './pages/admin/AdminLayout';
@@ -11,24 +12,27 @@ import ManageWaitlist from './pages/admin/ManageWaitlist';
 
 import './App.css';
 
+const NotFound = () => (
+  <div className="not-found">
+    <div className="not-found-card">
+      <span className="not-found-code">404</span>
+      <h2>Page not found</h2>
+      <p>The page you are looking for does not exist or has moved.</p>
+      <Link to="/" className="btn-primary">Back to booking</Link>
+    </div>
+  </div>
+);
+
 function App() {
   return (
     <Router>
       <div className="app-container">
-        <nav className="navbar">
-          <div className="logo">🏸 Badminton Booking</div>
-          <div className="nav-links">
-            <Link to="/">Book Court</Link>
-            <Link to="/history">History</Link>
-            <Link to="/admin" style={{ marginLeft: '20px', backgroundColor: '#e74c3c', padding: '5px 10px', borderRadius: '4px' }}>Admin Panel</Link>
-          </div>
-        </nav>
+        <Navbar />
         <main>
           <Routes>
             <Route path="/" element={<BookingPage />} />
             <Route path="/history" element={<HistoryPage />} />
 
-            {/* Admin Routes */}
             <Route path="/admin" element={<AdminLayout />}>
               <Route index element={<AdminDashboard />} />
               <Route path="courts" element={<ManageCourts />} />
@@ -37,8 +41,14 @@ function App() {
               <Route path="pricing" element={<ManagePricing />} />
               <Route path="waitlist" element={<ManageWaitlist />} />
             </Route>
+
+            <Route path="*" element={<NotFound />} />
           </Routes>
         </main>
+        <footer className="app-footer">
+          <span>Badminton Court Booking</span>
+          <span>Open daily · 6:00 AM – 9:00 PM</span>
+        </footer>
       </div>
     </Router>
   );

@@ -5,9 +5,12 @@ const WaitlistSchema = new mongoose.Schema({
     start_time: { type: String, required: true },
     end_time: { type: String, required: true },
     court: { type: mongoose.Schema.Types.ObjectId, ref: 'Court' }, // Optional preference
-    user_email: { type: String, required: true }, // Placeholder for user ID
+    user_email: { type: String, required: true },
     user_name: { type: String, required: true },
-    created_at: { type: Date, default: Date.now }
+    created_at: { type: Date, default: Date.now },
+    notified_at: { type: Date, default: null },
 });
+
+WaitlistSchema.index({ date: 1, court: 1, notified_at: 1 });
 
 module.exports = mongoose.model('Waitlist', WaitlistSchema);

@@ -12,6 +12,9 @@ const BookingSchema = new mongoose.Schema({
     }],
     total_price: { type: Number, required: true },
     status: { type: String, enum: ['CONFIRMED', 'CANCELLED'], default: 'CONFIRMED' },
-});
+}, { timestamps: true });
+
+BookingSchema.index({ court: 1, date: 1, status: 1 });
+BookingSchema.index({ coach: 1, date: 1, status: 1 });
 
 module.exports = mongoose.model('Booking', BookingSchema);
